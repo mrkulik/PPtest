@@ -13,31 +13,41 @@ import SwiftyJSON
 import RealmSwift
 
 
-class ViewController: UIViewController, CLLocationManagerDelegate {
+class WeatherViewController: UIViewController, CLLocationManagerDelegate {
 
     @IBOutlet weak var weatherConditionImage: UIImageView!
     @IBOutlet weak var locationLabel: UILabel!
     @IBOutlet weak var temperatureLabel: UILabel!
+    @IBOutlet weak var humidityLabel: UILabel!
+    @IBOutlet weak var pressureLabel: UILabel!
+    @IBOutlet weak var windLabel: UILabel!
     
     let locationManager = CLLocationManager()
     
     override func viewDidLoad() {
+
         super.viewDidLoad()
         
+        assignBackground()
+        
+        DBProvider.getData()
+        
+        updateUI()
+        
+        startLocationManagerSession()
+        
+    }
+
+    
+    func startLocationManagerSession() {
         if ReachabilityTest.isConnectedToNetwork() {
-            print("Internet connection available")
             locationManager.delegate = self
             locationManager.requestWhenInUseAuthorization()
             locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
             locationManager.startUpdatingLocation()
         }
-        else {
-            print("No Internet connection available")
-            DBProvider.getData()
-            updateUI()
-        }
     }
-
+    
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let location = locations[locations.count - 1]
@@ -49,7 +59,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     
     
-    private func fetchData(locationData: Dictionary<String, String>) {
+    func fetchData(locationData: Dictionary<String, String>) {
         DataFetcher.getData(url: Const.WEATHER_URL, parameters: locationData) {
             returnJSON in
             self.parseData(dataJSON: returnJSON)
@@ -57,7 +67,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     
     
-    private func parseData(dataJSON: JSON) {
+    func parseData(dataJSON: JSON) {
         print(dataJSON)
         do {
             try dbRealm.write({
@@ -65,13 +75,10 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 WeatherModel.instance.location_name = dataJSON["name"].stringValue
                 WeatherModel.instance.pressure = dataJSON["main"]["pressure"].intValue
                 WeatherModel.instance.temp = dataJSON["main"]["temp"].intValue - 273
-                WeatherModel.instance.temp_max = dataJSON["main"]["temp_max"].intValue - 273
-                WeatherModel.instance.temp_min = dataJSON["main"]["temp_min"].intValue - 273
-                WeatherModel.instance.visibility = dataJSON["visibility"].intValue / 1000
                 WeatherModel.instance.wind_deg = dataJSON["wind"]["deg"].intValue
                 WeatherModel.instance.wind_speed = dataJSON["wind"]["speed"].intValue
-                WeatherModel.instance.sunrise = dataJSON["sys"]["sunrise"].intValue
-                WeatherModel.instance.sunset = dataJSON["sys"]["sunset"].intValue
+                WeatherModel.instance.condition = dataJSON["weather"][0]["id"].intValue
+                WeatherModel.instance.weatherConditionImage = Converter.updateWeatherConditionImage(condition: WeatherModel.instance.condition)
                 dbRealm.add(WeatherModel.instance, update: true)
                 print(" Data stored.")
             })
@@ -85,9 +92,24 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     
     
-    private func updateUI() {
+    func updateUI() {
         locationLabel.text = WeatherModel.instance.location_name
         temperatureLabel.text = "\(WeatherModel.instance.temp)°"
+        weatherConditionImage.image = UIImage(named: WeatherModel.instance.weatherConditionImage)
+        humidityLabel.text = "Humidity: \(WeatherModel.instance.humidity)%"
+        pressureLabel.text = "Pressure: \(WeatherModel.instance.pressure) hPa"
+        windLabel.text = "Wind: \(Converter.windDirection(deg: WeatherModel.instance.wind_deg)) \(WeatherModel.instance.wind_speed) mps "
+    }
+    
+    
+    func assignBackground(){
+        let imageView = UIImageView(frame: view.bounds)
+        imageView.contentMode =  UIViewContentMode.scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.image = UIImage(named: "background")
+        imageView.center = view.center
+        view.addSubview(imageView)
+        self.view.sendSubview(toBack: imageView)
     }
     
     

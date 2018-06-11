@@ -17,14 +17,10 @@ class DBProvider {
             WeatherModel.instance.humidity = (data?.humidity)!
             WeatherModel.instance.location_name = (data?.location_name)!
             WeatherModel.instance.pressure = (data?.pressure)!
-            WeatherModel.instance.sunrise = (data?.sunrise)!
-            WeatherModel.instance.sunset = (data?.sunset)!
             WeatherModel.instance.temp = (data?.temp)!
-            WeatherModel.instance.temp_max = (data?.temp_max)!
-            WeatherModel.instance.temp_min = (data?.temp_min)!
-            WeatherModel.instance.visibility = (data?.visibility)!
             WeatherModel.instance.wind_deg = (data?.wind_deg)!
             WeatherModel.instance.wind_speed = (data?.wind_speed)!
+            WeatherModel.instance.weatherConditionImage = (data?.weatherConditionImage)!
         }
     }
 

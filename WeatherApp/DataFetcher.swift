@@ -13,17 +13,17 @@ import SwiftyJSON
 
 class DataFetcher {
     
-    static func getData(url: String, parameters: [String: String], completionClosure: @escaping (JSON) -> ()) {
+    static func getData(url: String, parameters: [String: String], completionHandler: @escaping (JSON) -> ()) {
         Alamofire.request(url, method: .get, parameters: parameters).responseJSON {
             response in
             if response.result.isSuccess {
-                completionClosure(JSON(response.result.value!))
+                completionHandler(JSON(response.result.value!))
             }
             else {
                 print("Error \(String(describing: response.result.error))")
             }
+
         }
-        
     }
     
 }
